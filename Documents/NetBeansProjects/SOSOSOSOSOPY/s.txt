@@ -1,0 +1,9 @@
+CP Proces1 29 program1.txt
+GO
+GO blad
+wciaz blad
+MF plik1 data
+M
+beka z typow
+EX
+SC
