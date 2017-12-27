@@ -20,7 +20,7 @@ import java.util.logging.Logger;
 
 public class Zarzadzanie_pamiecia {
 
-    Blok_Kontrolny running;
+    Running running;
     char[] RAM = new char[128];
     Stronica Tablica_str[];
     wolna_ramka[] freeFrames = new wolna_ramka[8];
@@ -28,9 +28,9 @@ public class Zarzadzanie_pamiecia {
     int adr_of_previous = 0;
     SecondChance SecCh;
 
-    public void setBlok(Blok_Kontrolny blok) {
-        this.running = blok;
-        this.Tablica_str = blok.getTab();
+    public void setProcess(PCB blok) {
+        this.running.running = blok;
+        this.Tablica_str = blok.page_table;
     }
 
     public Zarzadzanie_pamiecia() {
@@ -72,19 +72,19 @@ public class Zarzadzanie_pamiecia {
 
     public void freeMem() {
         for (wolna_ramka a : freeFrames) {
-            if (a.getId() == running.getID()) {
+            if (a.getId() == running.running.ID) {
                 a.setIsFree(true);
             }
         }
-        SecCh.clearFifo(running.getID());
+        SecCh.clearFifo(running.running.ID);
         char tabl[] = new char[16];
         for (int i = 0; i < 16; i++) {
             tabl[i] = ' ';
         }
         int licznik = 0;
-        for (Stronica a : running.getTab()) {
+        for (Stronica a : running.running.page_table) {
             try {
-                saveFrameToDisc(tabl, running.getMiejsceWpliku() + licznik);
+                saveFrameToDisc(tabl, running.running.where_in_file + licznik);
             } catch (IOException ex) {
                 Logger.getLogger(Zarzadzanie_pamiecia.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -92,7 +92,7 @@ public class Zarzadzanie_pamiecia {
         }
     }
 
-    public void loadToFile(String FileName, Blok_Kontrolny b) {
+    public void loadToFile(String FileName, PCB b) {
         // System.out.print("loadtofile");
         save_to_disk(read_from_file(FileName, b));
 
@@ -104,33 +104,33 @@ public class Zarzadzanie_pamiecia {
 
     public char readMemory(int Adres_Logiczny) {
         int FreeFrame = 9;
-        this.Tablica_str = running.getTab();
-        if (Adres_Logiczny >= running.getLiczbaZn()) {
-            running.setError(true);
+        this.Tablica_str = running.running.page_table;
+        if (Adres_Logiczny >= running.running.how_long) {
+            running.running.blad=true;
             return '$';
         } else {
             int nrStr = Adres_Logiczny / 16;
-            Stronica[] aha = running.getTab();
+            Stronica[] aha = running.running.page_table;
             boolean isInRam = aha[nrStr].getV_or_i();
             if (isInRam == true) {
-                int FrameNr = running.tab[nrStr].getFrameNumber();
+                int FrameNr = running.running.page_table[nrStr].getFrameNumber();
                 int adrFiz = FrameNr * 16 + (Adres_Logiczny % 16);
                 if (RamIsFull()) {
-                    SecCh.make_space(nrStr, running.getID());
+                    SecCh.make_space(nrStr, running.running.ID);
                 }
                 return RAM[adrFiz];
             } else {
                 if (RamIsFull()) {
                     int adr_to_delete = 0;
-                    ob victim = SecCh.make_space(nrStr, running.getID());
-                    List<Blok_Kontrolny> lista = running.getList();
+                    ob victim = SecCh.make_space(nrStr, running.running.ID);
+                    List<PCB> lista = running.running.getList(); //MILA NAPRAW TO KURWA
                     int lll = 0;
-                    for (Blok_Kontrolny m : lista) {
-                        if (m.getID() == victim.getId()) {
-                            for (Stronica str : m.getTab()) {
+                    for (PCB m : lista) {
+                        if (m.ID == victim.getId()) {
+                            for (Stronica str : m.page_table) {
                                 if (lll == victim.getPagenr()) {
-                                    FreeFrame = m.getTab()[lll].getFrameNumber();
-                                    adr_to_delete = m.getMiejsceWpliku() + lll * 16;
+                                    FreeFrame = m.page_table[lll].getFrameNumber();
+                                    adr_to_delete = m.where_in_file + lll * 16;
                                     str.setV_or_i(false);
                                     break;
                                 }
@@ -142,9 +142,9 @@ public class Zarzadzanie_pamiecia {
                     char wynik;
                     freeFrames[FreeFrame].setIsFree(false);
 
-                    freeFrames[FreeFrame].setId(running.getID());
-                    running.tab[nrStr].setFrameNumber(FreeFrame);
-                    running.tab[nrStr].setV_or_i(true);
+                    freeFrames[FreeFrame].setId(running.running.ID);
+                    running.running.page_table[nrStr].setFrameNumber(FreeFrame);
+                    running.running.page_table[nrStr].setV_or_i(true);
                     char tablica[] = getNewFrame(nrStr * 16);
                     char table_to_delete[] = new char[16];
                     for (int j = 0; j < 16; j++) {
@@ -164,16 +164,16 @@ public class Zarzadzanie_pamiecia {
                     for (int i = 0; i < 8; i++) {
                         if (freeFrames[i].getisFree() == true) {
                             freeFrames[i].setIsFree(false);
-                            SecCh.dodaj_do_kolejki(nrStr, running.getID());
-                            freeFrames[i].setId(running.getID());
-                            running.tab[nrStr].setFrameNumber(i);
-                            running.tab[nrStr].setV_or_i(true);
+                            SecCh.dodaj_do_kolejki(nrStr, running.running.ID);
+                            freeFrames[i].setId(running.running.ID);
+                            running.running.page_table[nrStr].setFrameNumber(i);
+                            running.running.page_table[nrStr].setV_or_i(true);
 
                             char tablica[] = getNewFrame(nrStr * 16);
                             for (int j = 0; j < 16; j++) {
                                 RAM[j + (i * 16)] = tablica[j];
                             }
-                            wynik = RAM[(running.tab[nrStr].getFrameNumber() * 16) + Adres_Logiczny % 16];
+                            wynik = RAM[(running.running.page_table[nrStr].getFrameNumber() * 16) + Adres_Logiczny % 16];
                             break;
                         }
                     }
@@ -186,33 +186,33 @@ public class Zarzadzanie_pamiecia {
 
     public void writeMemory(int Adres_Logiczny, char Value) {
         int FreeFrame = 9;
-        this.Tablica_str = running.getTab();
-        if (Adres_Logiczny >= running.getLiczbaZn()) {
-            running.setError(true);
+        this.Tablica_str = running.running.page_table;
+        if (Adres_Logiczny >= running.running.how_long) {
+            running.running.blad=true;
 
         } else {
             int nrStr = Adres_Logiczny / 16;
-            Stronica[] aha = running.getTab();
+            Stronica[] aha = running.running.page_table;
             boolean isInRam = aha[nrStr].getV_or_i();
             if (isInRam == true) {
-                int FrameNr = running.tab[nrStr].getFrameNumber();
+                int FrameNr = running.running.page_table[nrStr].getFrameNumber();
                 int adrFiz = FrameNr * 16 + (Adres_Logiczny % 16);
                 if (RamIsFull()) {
-                    SecCh.make_space(nrStr, running.getID());
+                    SecCh.make_space(nrStr, running.running.ID);
                 }
                 RAM[adrFiz] = Value;
             } else {
                 if (RamIsFull()) {
                     int adr_to_delete = 0;
-                    ob victim = SecCh.make_space(nrStr, running.getID());
-                    List<Blok_Kontrolny> lista = running.getList();
+                    ob victim = SecCh.make_space(nrStr, running.running.ID);
+                    List<PCB> lista = running.running.getList();
                     int lll = 0;
-                    for (Blok_Kontrolny m : lista) {
-                        if (m.getID() == victim.getId()) {
-                            for (Stronica str : m.getTab()) {
+                    for (PCB m : lista) {
+                        if (m.ID == victim.getId()) {
+                            for (Stronica str : m.page_table) {
                                 if (lll == victim.getPagenr()) {
-                                    FreeFrame = m.getTab()[lll].getFrameNumber();
-                                    adr_to_delete = m.getMiejsceWpliku() + lll * 16;
+                                    FreeFrame = m.page_table[lll].getFrameNumber();
+                                    adr_to_delete = m.where_in_file + lll * 16;
                                     str.setV_or_i(false);
                                     break;
                                 }
@@ -224,9 +224,9 @@ public class Zarzadzanie_pamiecia {
                     char wynik;
                     freeFrames[FreeFrame].setIsFree(false);
 
-                    freeFrames[FreeFrame].setId(running.getID());
-                    running.tab[nrStr].setFrameNumber(FreeFrame);
-                    running.tab[nrStr].setV_or_i(true);
+                    freeFrames[FreeFrame].setId(running.running.ID);
+                    running.running.page_table[nrStr].setFrameNumber(FreeFrame);
+                    running.running.page_table[nrStr].setV_or_i(true);
                     char tablica[] = getNewFrame(nrStr * 16);
                     char table_to_delete[] = new char[16];
                     for (int j = 0; j < 16; j++) {
@@ -245,16 +245,16 @@ public class Zarzadzanie_pamiecia {
                     for (int i = 0; i < 8; i++) {
                         if (freeFrames[i].getisFree() == true) {
                             freeFrames[i].setIsFree(false);
-                            SecCh.dodaj_do_kolejki(nrStr, running.getID());
-                            freeFrames[i].setId(running.getID());
-                            running.tab[nrStr].setFrameNumber(i);
-                            running.tab[nrStr].setV_or_i(true);
+                            SecCh.dodaj_do_kolejki(nrStr, running.running.ID);
+                            freeFrames[i].setId(running.running.ID);
+                            running.running.page_table[nrStr].setFrameNumber(i);
+                            running.running.page_table[nrStr].setV_or_i(true);
 
                             char tablica[] = getNewFrame(nrStr * 16);
                             for (int j = 0; j < 16; j++) {
                                 RAM[j + (i * 16)] = tablica[j];
                             }
-                            RAM[(running.tab[nrStr].getFrameNumber() * 16) + Adres_Logiczny % 16] = Value;
+                            RAM[(running.running.page_table[nrStr].getFrameNumber() * 16) + Adres_Logiczny % 16] = Value;
                             break;
                         }
                     }
@@ -291,7 +291,7 @@ public class Zarzadzanie_pamiecia {
             int licznik1 = 0;
             int licznik2 = 0;
             while ((line = bufferedReader.read()) != -1) {
-                if (licznik1 >= running.getMiejsceWpliku() + AdrLog) {
+                if (licznik1 >= running.running.where_in_file + AdrLog) {
                     char ch = (char) line;
                     x.append(ch);
 
@@ -346,10 +346,10 @@ public class Zarzadzanie_pamiecia {
         }
     }
 
-    private char[] read_from_file(String plik, Blok_Kontrolny b) {
+    private char[] read_from_file(String plik, PCB b) {
         int line;
         int licznik = 0;
-        b.setMiejsceWpliku(file_adr);
+        b.where_in_file=(file_adr);
         adr_of_previous = file_adr;
         StringBuilder x = null;
         FileReader fileReader = null;
@@ -384,7 +384,7 @@ public class Zarzadzanie_pamiecia {
             file_adr++;
             licznik++;
         }
-        b.setLiczbaZn(licznik);
+        b.how_long=(licznik);
 
         char data[];
         String p;
@@ -394,17 +394,17 @@ public class Zarzadzanie_pamiecia {
         data = p.toCharArray();
 
         if (data.length % 16 == 0) {
-            b.setLiczbaStr(data.length / 16);
+            b.table_size=(data.length / 16);
             Tablica_str = new Stronica[data.length / 16];
         } else {
-            b.setLiczbaStr((data.length / 16) + 1);
+            b.table_size=((data.length / 16) + 1);
             Tablica_str = new Stronica[(data.length / 16) + 1];
         }
-        b.setTab(Tablica_str);
+        b.page_table=Tablica_str;
 
-        for (int i = 0; i < b.getTab().length; i++) {
-            b.getTab()[i] = new Stronica();
-            b.getTab()[i].setV_or_i(false);
+        for (int i = 0; i < b.page_table.length; i++) {
+            b.page_table[i] = new Stronica();
+            b.page_table[i].setV_or_i(false);
         }
 
         return data;

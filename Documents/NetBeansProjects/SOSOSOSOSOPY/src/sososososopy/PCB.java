@@ -1,4 +1,4 @@
-package bartekso;
+package sososososopy;
 
 
 public class PCB {
@@ -25,12 +25,12 @@ public class PCB {
     public int R4 = 0;
     
     //FILIP
-    public /*Wiersz*/int page_table[];//ref do tablicy stronic
+    public /*Wiersz*/Stronica page_table[];//ref do tablicy stronic
     public int how_long; //długość w znaczkach/bajtach, dostaję od Ewy
     public int table_size; //how_long/16 zaokrąglając w górę
     public int where_in_file;//numer bajtu, od którego zaczyna się kod tego procesu w pliku wymiany
     public String which_file;//nazwa pliku .txt(to .txt będzie już uwzględnione w nazwie), który zawiera kod tego procesu
-    
+    public Boolean blad;
     //SZYMON
     public String statement;
 
