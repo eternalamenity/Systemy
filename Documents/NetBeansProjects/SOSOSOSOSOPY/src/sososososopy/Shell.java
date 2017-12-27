@@ -9,23 +9,16 @@ package sososososopy;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.util.Scanner;
 import java.util.HashMap;
-/**
- *
- * @author Lena
- */
+
 
 
 public class Shell {
     
     
-    public void Print(String string){ /////////Bo mila jest spierdolony i ma jakieś głupie życzenia
-        System.out.println(string);
-    }
-     
-    
-    int count(String file) throws FileNotFoundException{      ////Zwraca liczbę znaczkow w programie
+    private int count(String file) throws FileNotFoundException{      ////Zwraca liczbę znaczkow w programie
             File fileS = new File(file);
             Scanner in = new Scanner(fileS);  
              int lines = 0;
@@ -38,9 +31,10 @@ public class Shell {
                  chars+=lines;
                    return chars;}
     
-    void Separate(String line){ ///////////Rozdzielanie
+    private void Separate(String line){ ///////////Rozdzielanie
     if(line.length()>2){
     Command =line.substring(0,2);
+    Command = Command.toUpperCase();
     Parameter = line.substring(3,line.length());
     Parameters = Parameter.split(" ");  
 //    for ( String ss : Parameters) {
@@ -54,21 +48,59 @@ public class Shell {
     }
     } /////end rozdzielania
     
-      boolean isAllowed(){ ///////Czy dane sa podane prawidlowo
+      private boolean isAllowed(){ ///////Czy dane sa podane prawidlowo
       if (!Commands.containsKey(Command)) return false;
       if (Commands.get(Command)==0 && Parameters==null) return true;
       if (Commands.get(Command)==0 && Parameters!=null) return false;
       if (Parameters.length!=Commands.get(Command)) return false;
       return true;
       }
+      
+      
+      private void draw() throws FileNotFoundException{
+      
+      fileLogo = new File("logo.txt");
+      
+      Scanner inL = new Scanner(fileLogo);
+     while(inL.hasNextLine())  {  ////Dopoki plik nie jest pusty
+                      
+                       String logoLine = inL.nextLine();   ////////Wczytujemy polecenie
+                      
+                      System.out.println(logoLine);
+     }
+      System.out.println();
+      } //////end logo
+      
+      
     
-        String Command;
-        String Parameter;
-        String[] Parameters;  ///maksymalnie 3 parametry
-        String PowtCom; 
-         private  HashMap<String, Integer> Commands;
-          File fileScript;
+        private String Command;
+        private String Parameter;
+        private String[] Parameters;  ///maksymalnie 3 parametry
+        private String PowtCom; 
+        private HashMap<String, Integer> Commands;
+         
+         
+         private FileSystem disc;
+         private ProcessManager ProcessManager;
+         private Zarzadzanie_pamiecia Memory;
+         private File fileScript;
+         private File fileLogo;
+         
+         
 	 public Shell () throws InterruptedException, FileNotFoundException, IOException {
+             
+             
+            disc = new FileSystem(32,256).create();
+            ProcessManager = new ProcessManager(); 
+            Memory = new Zarzadzanie_pamiecia();
+            //////////Tu sie kazdy musi wywolac razem z parametrami
+            
+            
+            
+            
+            
+            
+             
              
              Commands = new HashMap<>(); ///tworzymy liste zawierajaca komendy oraz liczbe parametrow
              Commands.put("CP",3); ///Utworz proces
@@ -82,14 +114,20 @@ public class Shell {
              Commands.put("EF",1); ///Edytuj plik
              Commands.put("SC",0); ///Wyswietl tablice Fat
              Commands.put("CC",3); ///Przypisz komunikat do procesu
+             Commands.put("RC",1); ///Przeczytaj komunikat
              Commands.put("EX",0); ///Zamknij system
              
              
-             ////////////////////Ekran powitalny jakies pierdopierdu podaj nazwe pliku ze skryptem
+             ////////////////////Ekran powitalny
+             
+             try { draw();}
+             catch (FileNotFoundException e){
+             System.out.println("Wystapil błąd z wczytaniem loga.");}
+             
+             
              
             Scanner console = new Scanner(System.in);           
             do {
-            
             System.out.println("Prosze podac plik ze skryptem.");
             String inputScript = console.next();
             fileScript = new File(inputScript);
@@ -100,7 +138,6 @@ public class Shell {
                  while(in.hasNextLine())  {  ////Dopoki plik nie jest pusty
                       
                        String line = in.nextLine();   ////////Wczytujemy polecenie
-                     /// line = line.toLowerCase(); ///////wszystko malymi literami
                       
                       Separate(line);
                       
@@ -125,42 +162,84 @@ public class Shell {
                       
                       
                       
-                       ///////////IsAllowed - czy komenda jest poprawna
-                       ///////////Jak nie jest to obslugujemy (prosimy o podanie jeszcze raz line ew czy skipnac?
                        
                        switch(Command){             ///osługa komendy
                            case "CP" : { ///Utworz proces
-                               System.out.println("test CP");
+                               int a;
+                               
+                               String inputScript2 = Parameters[2];
+                                fileScript = new File(inputScript2);
+                                if(!fileScript.exists()||fileScript.isDirectory()){
+                                    inputScript2=inputScript2+".txt";
+                                    fileScript = new File(inputScript2);
+                                    if(!fileScript.exists()||fileScript.isDirectory()){
+                                System.out.println("Plik o podanej nazwie nie istnieje. Nie można utworzyć procesu. Nastąpi teraz przejście do nastepnej komendy");
+                                break; }
+                                Parameters[2]=inputScript2;
+                                }
+                               
+                               try{
+                               a = Integer.parseInt(Parameters[1]);
+                               ProcessManager.new_process(Parameters[0],a,Parameters[2]);
+                               }catch(NumberFormatException e){
+                               System.out.println("Podana wielkość jest nieprawidłowa. Parametr drugi być liczbą. Nastąpi teraz przejście do następnej komendy.");}
+                               /////////ZAKLADAM ZE TU MILA TEZ MI COS RZUCI ALBO SAM OGARNIE
                                break;}
                            case "DP" : { ///Usuń proces
-                               System.out.println("test DP");
+                               ProcessManager.delete_process(Parameters[0]); 
+                               ///////////////ZAKLADAM ZE JAKIS WYJATEK MI TU MILA RZUCI OR SMTH
                                break;}
                            case "BC" : { ///Pokaż blok procesu
-                               System.out.println("test BC");
+                               System.out.println(ProcessManager.show_info(Parameters[0]));
                                break;}
                            case "GO" : { ///Wykonaj rozkaz
-                               System.out.println("test GO");
+                               System.out.println("test GO"); ////////Do ogarniecia
+                               
+                               
+                               
                                break;}
                            case "MC" : { ///Pokaz pamiec
-                               System.out.println("test MC");
+                               
+                               System.out.println(Memory.getRAM());  ///////Do ogarniecia
+                               
                                break;}
                            case "MF" : { ///Utworz plik
-                               System.out.println("test MF");
-                               break;}
+                               try{
+                               disc.saveOnDisc(Parameters[0], Parameters[1]);
+                               break;}catch(IOException e){System.out.println("Nie udało się utworzyć pliku");}
+                           }
                            case "SF" : { ///Wyswietl plik
-                               System.out.println("test SF");
+                               try{
+                               System.out.println(disc.readFile(Parameters[0]));}
+                               catch(NoSuchFileException e){
+                               System.out.println("Nie można wyświetlić. Plik o nazwie \""+ Parameters[0] + " \" nie istnieje.");
+                               }
                                break;}
                            case "DF" : { ///Usuń plik
-                               System.out.println("test DF");
+                               if (disc.removeFile(Parameters[0])==true){
+                               System.out.println("Usunięto plik!");
+                               } else {
+                               System.out.println("Usunięcie pliku nie powiodło się, ponieważ już nie istnieje. ");}
                                break;}
                            case "EF" : { ///Edytuj plik
                                System.out.println("test EF");
+                               
+                               
                                break;}
                            case "SC" : { ///Wyswietl tablice Fat
-                               System.out.println("test SC");
+                               disc.showClusters();
                                break;}
                            case "CC" : { ///Przypisz komunikat do procesu
                                System.out.println("test CC");
+                               
+                               
+                               
+                               break;}
+                           case "RC" : { ///Przeczytaj komunikat
+                               System.out.println("test RC");
+                               
+                               
+                               
                                break;}
                            
                            case "EX" : { ///Zamknij system
@@ -176,8 +255,4 @@ public class Shell {
                  
                  System.in.read();
          }
-
-   
 }
-                
-	
