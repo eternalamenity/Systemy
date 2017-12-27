@@ -314,8 +314,27 @@ public class Zarzadzanie_pamiecia {
         return data;
     }
 
-    public char[] getRAM() {
-        return RAM;
+    public char [] getRAM(int adr, int size) throws Exception {
+        if(adr>127){
+        throw new Exception("zly adres");
+        }
+        if(size>127){
+        throw new Exception("zly rozmiar");
+        }
+        
+        char t[]=new char[size];
+        int licznik=0;
+        for(int i=0;i<RAM.length; i++ ){
+            if(i>=adr){
+            t[licznik]=RAM[i];
+            licznik++;
+            if(licznik==size){
+            break;
+            }
+            }
+            
+        }
+        return t;
     }
 
     private void save_to_disk(char data[]) {
