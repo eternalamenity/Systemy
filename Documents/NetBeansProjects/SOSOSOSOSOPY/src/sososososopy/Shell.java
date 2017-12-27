@@ -12,8 +12,7 @@ import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.util.Scanner;
 import java.util.HashMap;
-
-
+import javax.management.openmbean.OpenDataException;
 
 public class Shell {
     
@@ -90,7 +89,7 @@ public class Shell {
 	 public Shell () throws InterruptedException, FileNotFoundException, IOException {
              
              
-            disc = new FileSystem(32,256).create();
+            disc = new FileSystem(32,32).create();
             ProcessManager = new ProcessManager(); 
             Memory = new Zarzadzanie_pamiecia();
             //////////Tu sie kazdy musi wywolac razem z parametrami
@@ -173,7 +172,8 @@ public class Shell {
                                     inputScript2=inputScript2+".txt";
                                     fileScript = new File(inputScript2);
                                     if(!fileScript.exists()||fileScript.isDirectory()){
-                                System.out.println("Plik o podanej nazwie nie istnieje. Nie można utworzyć procesu. Nastąpi teraz przejście do nastepnej komendy");
+                                System.out.println("Plik o podanej nazwie nie istnieje. Nie można utworzyć procesu"
+                                        + "Nastąpi teraz przejście do nastepnej komendy");
                                 break; }
                                 Parameters[2]=inputScript2;
                                 }
@@ -182,12 +182,11 @@ public class Shell {
                                a = Integer.parseInt(Parameters[1]);
                                ProcessManager.new_process(Parameters[0],a,Parameters[2]);
                                }catch(NumberFormatException e){
-                               System.out.println("Podana wielkość jest nieprawidłowa. Parametr drugi być liczbą. Nastąpi teraz przejście do następnej komendy.");}
-                               /////////ZAKLADAM ZE TU MILA TEZ MI COS RZUCI ALBO SAM OGARNIE
+                               System.out.println("Podana wielkość jest nieprawidłowa. Parametr drugi musi być liczbą. Nastąpi teraz przejście do następnej komendy.");}
+                             
                                break;}
                            case "DP" : { ///Usuń proces
                                ProcessManager.delete_process(Parameters[0]); 
-                               ///////////////ZAKLADAM ZE JAKIS WYJATEK MI TU MILA RZUCI OR SMTH
                                break;}
                            case "BC" : { ///Pokaż blok procesu
                                System.out.println(ProcessManager.show_info(Parameters[0]));
@@ -199,10 +198,16 @@ public class Shell {
                                
                                break;}
                            case "MC" : { ///Pokaz pamiec
-                               
-                               System.out.println(Memory.getRAM());  ///////Do ogarniecia
-                               
+                               try{
+                               int adr = Integer.parseInt(Parameters[0]);
+                               int size = Integer.parseInt(Parameters[1]);
+                               System.out.println(Memory.getRAM(adr, size));  
                                break;}
+                           catch(NumberFormatException e){
+                               System.out.println("Podana wielkość jest nieprawidłowa. Parametry muszą być liczbami. Nastąpi teraz przejście do następnej komendy.");}
+                               catch (Exception e){
+                               System.out.println("Podane dane są nieprawidłowe. Wychodzą poza zakres.");}
+                           }
                            case "MF" : { ///Utworz plik
                                try{
                                disc.saveOnDisc(Parameters[0], Parameters[1]);
@@ -213,7 +218,10 @@ public class Shell {
                                System.out.println(disc.readFile(Parameters[0]));}
                                catch(NoSuchFileException e){
                                System.out.println("Nie można wyświetlić. Plik o nazwie \""+ Parameters[0] + " \" nie istnieje.");
-                               }
+                               } catch (OpenDataException e) {
+                               System.out.println("Plik już jest otwarty!");
+                               
+                           }
                                break;}
                            case "DF" : { ///Usuń plik
                                if (disc.removeFile(Parameters[0])==true){
@@ -222,13 +230,21 @@ public class Shell {
                                System.out.println("Usunięcie pliku nie powiodło się, ponieważ już nie istnieje. ");}
                                break;}
                            case "EF" : { ///Edytuj plik
-                               System.out.println("test EF");
-                               
-                               
+                               try{
+                               disc.editFile(Parameters[0],Parameters[1],Parameters[2]);
+                               } 
+                               catch(OpenDataException e){
+                               System.out.println("Plik nie znajduje sie w trybie edycji.");}
+                               catch (NoSuchFileException e){
+                               System.out.println("Nie można wyświetlić. Plik o nazwie \""+ Parameters[0] + " \" nie istnieje.");}
+                               catch (IOException e){
+                               System.out.println("Wystąpił problem w edycji pliku.");}
                                break;}
                            case "SC" : { ///Wyswietl tablice Fat
                                disc.showClusters();
                                break;}
+                           
+                           
                            case "CC" : { ///Przypisz komunikat do procesu
                                System.out.println("test CC");
                                
@@ -255,4 +271,8 @@ public class Shell {
                  
                  System.in.read();
          }
+
+   
 }
+                
+	
