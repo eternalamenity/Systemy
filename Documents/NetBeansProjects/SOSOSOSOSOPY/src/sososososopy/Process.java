@@ -1,112 +1,138 @@
 package sososososopy;
 
 
-public class Process {
-    private PCB blok;
+
+public class Proces {
+    private PCB block;
 
     
-    
-    public Process(int id, String name) {//proces bezczynności, Filip na starcie robi część roboty automatycznie       
-        blok=new PCB();
-        blok.ID=id;
-        blok.process_name=name;
+    public Proces(int id, String name) {//proces bezczynności, Filip na starcie robi część roboty automatycznie       
+        block=new PCB();
+        block.ID=id;
+        block.name=name;//on dostanie z ProcesManager name="PB"
         
-        blok.table_size=1;//wiem już teraz, ile będzie zajmował proces bezczynności
-        blok.base_priority=blok.current_priority=6;//priorytet procesu bezczynności
-        blok.which_file=" ";//umówiony sygnał dla FILIPA
+        block.table_size=1;//wiem już teraz, ile będzie zajmował proces bezczynności
+        block.base_priority=block.current_priority=6;//priorytet procesu bezczynności
+        block.which_file=" ";//umówiony sygnał dla FILIPA
         
-        /***********BLOKFILIPA.loadToFile(which_file);*/
+        Zarzadzanie_pamiecia.loadToFile(block.which_file);//w tej metodzie Filip nadaje odpowiednie wartości zmiennym page_table[] i where_in_file
         
-        //W POWYŻSZEJ METODZIE FILIP NADAJE ODPOWIEDNIE WARTOŚCI ZMIENNYM PAGE_TABLE[]; I WHERE_IN_FILE;
+        block.state=0;//że gotowy
         
-        blok.process_state=0;
+        //reszta wymaganych operacji wykonywana w metodzie ProcesManager, ze wzgledu na inny charakter działań
     }
     
     
-    public Process(int id, String name, int how_long, String which_file) {//pozostałe procesy
-        blok=new PCB();
-        blok.ID=id;//z pomocą podanych zmiennych inicjalizuję 5 pól w PCB
-        blok.process_name=name;
-        blok.which_file=which_file;
-        blok.how_long=how_long;
+    public Proces(int id, String name, int how_long, String which_file) {//pozostałe procesy
+        block=new PCB();
+        block.ID=id;//z pomocą podanych zmiennych inicjalizuję 5 pól w PCB
+        block.name=name;//to ma byc logiczne?
+        block.which_file=which_file;
+        block.how_long=how_long;
         if((how_long%16)!=0){
-            blok.table_size=how_long/16+1;
+            block.table_size=how_long/16+1;
         }
         else{
-            blok.table_size=how_long/16;
+            block.table_size=how_long/16;
         }
         
         if(id%3==0){//pamiętaj, że proces bezczynności sprawi, że pierwsze dwa będą zwykłe
-            blok.base_priority=blok.current_priority=2;//że procesy Czasu Rzeczywistego
+            block.base_priority=block.current_priority=2;//że procesy Czasu Rzeczywistego
         }
         else{
-            blok.base_priority=blok.current_priority=5;//że zwykłe
+            block.base_priority=block.current_priority=5;//że zwykłe
         }
         
-        /***********BLOKFILIPA.loadToFile(which_file);*/
+        Zarzadzanie_pamiecia.loadToFile(block.which_file);//w tej metodzie Filip nadaje odpowiednie wartości zmiennym page_table[] i where_in_file
         
-        //W POWYŻSZEJ METODZIE FILIP NADAJE ODPOWIEDNIE WARTOŚCI POLOM PAGE_TABLE[]; I WHERE_IN_FILE;
+        block.state=0;//GOTOWY
         
-        blok.process_state=0;//GOTOWY
+        //reszta operacji wykonywana w metodzie ProcesManager, ze wzgledu na inny charakter działań
     }
 
-    public PCB get_PCB() {
-        return blok;
+    
+    //WAZNE!!!//wszędzie gdzie nie zwracam całego obiektu musi być set (żaden String ani Integer niewiele tu pomoże, tu chodzi chyba o to, że ten ktoś dziala na kopii obiektu, ale na oryginałach jego wnętrza/pól - masz surowego Stringa=kopia i tak)
+    
+    public PCB get_PCB() {//kimkolwiek jestes ty używający tej metody przeczytaj powyższy komentarz (jak nie zrozumiesz to napisz do mnie)
+        return block;
     }
-    public void set_PCB(PCB pcb){
-        blok=pcb;
-    }
+    //SET niepotrzebny, w tym przypadku GET zadziała jak referencja
+    
     public int get_ID() {
-        return blok.ID;
+        return block.ID;
     }
-    public String get_process_name() {
-        return blok.process_name;
+    //SET nie ma, id się nie zmienia
+    
+    public String get_name() {
+        return block.name;
     }
-    public int get_process_state() {
-        return blok.process_state;
+    //SET nie ma, bo imienia się nie zmienia
+    
+    public int get_state() {
+        return block.state;
     }
-    public void set_process_state(int i){
-        blok.process_state=i;
+    public void set_state(int i){
+        block.state=i;
     }
     
     public int get_base_priority() {
-        return blok.base_priority;
+        return block.base_priority;
     }
+    //SET nie ma, bo bazowego priorytetu się nie zmienia 
+    
     public int get_current_priority() {
-        return blok.current_priority;
+        return block.current_priority;
     }
-    public void set_priority(int i){
-        if(blok.current_priority==0||blok.current_priority==1||blok.current_priority==2){
+    public void set_current_priority(int i) throws Exception {
+        if(block.base_priority==0||block.base_priority==1||block.base_priority==2){
             if(i==0||i==1||i==2){
-                blok.current_priority=i;
+                block.current_priority=i;
+            }
+            else{
+                throw new Exception("Nie mozna zmienic typu procesu!");
             }
         }
-        if(blok.current_priority==3||blok.current_priority==4||blok.current_priority==5){
+        if(block.base_priority==3||block.base_priority==4||block.base_priority==5){
             if(i==3||i==4||i==5){
-                blok.current_priority=i;
+                block.current_priority=i;
+            }
+            else{
+                throw new Exception("Nie mozna zmienic typu procesu!");//Shell musi poinformowac Bartoszka, że podał złą nazwę
             }
         }
     }
-    public int get_counter() {//zlicza WSZYSTKIE rozkazy wykonane od narodzin tego procesu
-        return blok.current_priority;
+    
+    public int get_how_hungry() {//zlicza wszystkie (ale nie swoje) rozkazy wykonane od narodzin tego procesu
+        return block.how_hungry;
     }
-    public void set_counter(int i){
-        blok.counter=i;
+    public void set_how_hungry(int i){
+        block.how_hungry=i;
     }
-    public void increase_counter(){
-        blok.counter=blok.counter+1;
+    public void increase_how_hungry(){
+        block.how_hungry=block.how_hungry+1;
     }
+    
+
     
     
     //CZAREK
     public int get_vruntime() {
-        return blok.vruntime;
+        return block.vruntime;
+    }
+    public void set_vruntime(int i){
+        block.vruntime=i;
     }
     public int get_birth_time() {//ten cały czas urodzenia
-        return blok.birth_time;
+        return block.birth_time;
+    }
+    public void set_birth_time(int i){
+        block.birth_time=i;
     }
     public int get_com_executed() {//ile rozkazów z TEGO procesu zostało wykonanych na razie
-        return blok.com_executed;
+        return block.com_executed;
+    }
+    public void set_com_executed(int i){
+        block.com_executed=i;
     }
 
     
@@ -114,63 +140,104 @@ public class Process {
     
     //JĘDRZEJ
     public int get_R1() {
-        return blok.R1;
+        return block.R1;
+    }
+    public void set_R1(int i){
+        block.R1=i;
     }
     public int get_R2() {
-        return blok.R2;
+        return block.R2;
+    }
+    public void set_R2(int i){
+        block.R2=i;
     }
     public int get_R3() {
-        return blok.R3;
+        return block.R3;
+    }
+    public void set_R3(int i){
+        block.R3=i;
     }
     public int get_R4() {
-        return blok.R4;
+        return block.R4;
     }
+    public void set_R4(int i){
+        block.R4=i;
+    }
+    
+    
     
     
     //FILIP
-    public /*Wiersz*/int[] get_page_table() {
-        return blok.page_table;
+    public Stronica[] get_page_table() {
+        return block.page_table;
     }
+    //SET niepotrzebny, bo Wiersz to obiekt? No ale z testowania tablic obiektów wynika, że sam get całkowicie wystarczy
     public int get_how_long() {
-        return blok.how_long;
+        return block.how_long;
     }
+    //SET niepotrzebny, tego się nie zmienia
     public int get_table_size() {
-        return blok.table_size;
+        return block.table_size;
     }
+    //SET niepotrzebny, tego się nie zmienia
     public int get_where_in_file() {
-        return blok.where_in_file;
+        return block.where_in_file;
+    }
+    public void set_where_in_file(int i){
+        block.where_in_file=i;
     }
     public String get_which_file() {
-        return blok.which_file;
+        return block.which_file;
     }
+    public void set_which_file(String i){//To, że to string niewiele pomaga. Z naukowych badań doktora Mila wynika, że i tak w GET pracujemy na kopii
+        block.which_file=i;
+    }  
+    
+    
     
     
     //SZYMON
     public String get_statement() {
-        return blok.statement;
+        return block.statement;
     }
-    public void set_statement(String i){//to można wywalić, ale Szymon chciał
-        blok.statement=i;
+    public void set_statement(String i){//bo String to i tak zawsze kopia
+        block.statement=i;
     }
+    
+    
+    
+    
+    //PIOTREK
+    public boolean get_if_lock(){
+        return block.if_lock;
+    }
+    public void set_if_lock(int i){
+        if(i==0) {
+            block.if_lock=false;
+        }
+        else block.if_lock=true;
+    }
+    
+    
     
     
     //EWA
     public String show_info() {
         String s=new String();
-        s=s+"Proces "+blok.process_name+" o ID="+blok.ID+" i priorytecie="+blok.current_priority+", bedacy w stanie ";
-        if(blok.process_state==0) {
+        s="Proces "+block.name+" o ID="+block.ID+" i priorytecie="+block.current_priority+", bedacy w stanie ";
+        if(block.state==0) {
             s=s+"''GOTOWY''";
         }
         else{
-            if(blok.process_state==1){ 
+            if(block.state==1){ 
                 s=s+"''OCZEKUJACY''";
             }
             else{
-                if(blok.process_state==2) {
+                if(block.state==2) {
                     s=s+"''ZAKONCZONY''";
                 }
                 else {
-                    s=s+"z jakiegos powodu nieznanym";
+                    s=s+"-1";
                 }
             }
         }
@@ -178,4 +245,9 @@ public class Process {
     }
     
     
+    
 }
+
+
+
+
