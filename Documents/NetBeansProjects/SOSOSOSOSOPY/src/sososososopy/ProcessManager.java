@@ -2,293 +2,264 @@ package sososososopy;
 import java.util.LinkedList;
 import java.util.List;
 
-public class ProcessManager {
-    private int new_ID;
-    private List<Process> waiting_normal_processes=new LinkedList<>();
-    private List<Process> ready_normal_processes=new LinkedList<>();
-    private List<Process> waiting_real_processes=new LinkedList<>();
-    private List<Process> ready_real_processes=new LinkedList<>();
-    private List<Process> all_processes=new LinkedList<>();
+
+
+public class ProcesManager {
+    private int new_ID=0;
+    private List<Proces> waiting_normal_processes=new LinkedList<>();
+    private List<Proces> ready_normal_processes=new LinkedList<>();
+    private List<Proces> waiting_real_processes=new LinkedList<>();
+    private List<Proces> ready_real_processes=new LinkedList<>();
+    private List<Proces> all_processes=new LinkedList<>();
     
-    public ProcessManager() {
-        new_ID=0;
-        ready_normal_processes.add(new Process(new_ID, "PB"));
-        all_processes.add(new Process(new_ID, "PB"));
+    
+    public ProcesManager() {
+        ready_normal_processes.add(new Proces(new_ID, "PB"));
+        all_processes.add(new Proces(new_ID, "PB"));
         new_ID++;
-        //CZAREK.Add_to_Runnable_proces_Queue(ready_normal_processes.get(0).get_PCB());
-        //Running=ready_normal_processes.get(0);
+        Processor.Add_to_Runnable_proces_Queue(ready_normal_processes.get(0).get_PCB());//ref zadziała jak trzeba
+        Running=all_processes.get(0);//to bedzie ten nasz proces bezczynności
                 
     }
     
-    public void new_process(String name, int how_long, String which_file){
+    
+    public void new_proces(String name, int how_long, String which_file) throws Exception {
         int w=0;
-        for(Process p:all_processes){
-            if(p.get_process_name()==name){
+        for(Proces p:all_processes){
+            if(p.get_name()==name){
                 w=1;
             }
         }
-        Process p1=new Process(new_ID, name, how_long, which_file);
-        new_ID++;
         
-        if(w==0){
-            /////////////////////////////
+        if(w==0){//nazwa się nie powtarza
+            Proces p1=new Proces(new_ID, name, how_long, which_file);
+            new_ID++;
+            
             if(p1.get_base_priority()==0||p1.get_base_priority()==1||p1.get_base_priority()==2){
                 ready_real_processes.add(p1);
                 all_processes.add(p1);
-                //CZAREK.Add_to_Runnable_proces_Queue(p1.get_PCB());
+                Processor.Add_to_Runnable_proces_Queue(p1.get_PCB());
             }
             if(p1.get_base_priority()==3||p1.get_base_priority()==4||p1.get_base_priority()==5){
                 ready_normal_processes.add(p1);
                 all_processes.add(p1);
-                //CZAREK.Add_to_Runnable_proces_Queue(p1.get_PCB());
+                Processor.Add_to_Runnable_proces_Queue(p1.get_PCB());
             }
         }
-        else{//nazwa się powtarza
-            delete_process(p1.get_process_name());//Czarek musi być gotowy na to, że tego procesu u niego nie ma-nie może być, bo wtedy on ma dwa o tej samej nazwie -> któy on usunie? nie wiem, ale usuwa właśnie po nazwie
-            //EWA.wyswietl("Proces o takiej nazwie już istnieje"); 
+        else{//że nazwa się powtarza
+            throw new Exception("Prosze podac inna nazwe, ta jest juz zajeta!"); 
         }    
     }
     
-    public void delete_process(String name){
-        Process p1=new Process(0,"",0,"");//proces taki nie będzie nigdzie, bo priorytet zero jest dla bezczynności, a on ma inne pozostałe parametry
-        for(Process p:all_processes){
-            if(p.get_process_name()==name){
-                p1=new Process(p.get_ID(), p.get_process_name(), p.get_how_long(), p.get_which_file());
+    
+    public void delete_proces(String name) throws Exception {//NO I TUTAJ MILA COŚ JEST ŻLE//jeśli to czytacie znaczy już jest ok
+        int w=0;//flaga "czy znaleziono" taki proces
+        for(Proces p:all_processes){
+            if(p.get_name()==name){
+                w=1;//ze znaleziono taki proces
+                p.set_state(2);//zakonczony, właściwie mógłbym usunąć i ten stan
+                if (p.get_name()=="PB"){//jeśli użytkownik chce usunąć proces bezczynności, to nakrzycz na niego i nic nie rób
+                    throw new Exception("Nie wolno krzywdzic procesu bezczynnosci!");
+                }   
+                else{//jeśli to nie jest proces bezczynności, to pozwól usunąć
+                    Processor.Take_off_Runnable_proces_Queue(p1.get_PCB());
+                    Zarzadzanie_pamiecia.freeMem();
+                    
+                    
+                 
+                    for(Proces p2: ready_normal_processes){
+                        if(p2.get_name()==name){
+                            ready_normal_processes.remove(p2);
+                            break;
+                        }
+                    }
+                    for(Proces p2: waiting_normal_processes){
+                        if(p2.get_name()==name){
+                            waiting_normal_processes.remove(p2);
+                            break;
+                        }
+                    }
+                    for(Proces p2: ready_real_processes){
+                        if(p2.get_name()==name){
+                            ready_real_processes.remove(p2);
+                            break;
+                        }
+                    }
+                    for(Proces p2: waiting_real_processes){
+                        if(p2.get_name()==name){
+                            waiting_real_processes.remove(p2);
+                            break;
+                        }
+                    }
+                    for(Proces p2: all_processes){
+                        if(p2.get_name()==name){
+                            all_processes.remove(p2);
+                            break;
+                        }
+                    }
+                }         
             }
         }
-        if (p1.get_process_name()=="PB"){
-            //EWA.wyswietl("Nie pozwole na usuniecie procesu bezczynnosci");
-        }   
-        else{//jeśli to nie jest proces bezczynności, to pozwól usunąć
-            //CZAREK.Take_off_Runnable_proces_Queue(p1.get_PCB());
-            //FILIP.freeMem();
-            for(Process p: ready_normal_processes){
-                if(p.get_process_name()=="name"){
-                    ready_normal_processes.remove(p);
-                }
-            }
-            for(Process p: waiting_normal_processes){
-                if(p.get_process_name()=="name"){
-                    waiting_normal_processes.remove(p);
-                }
-            }
-            for(Process p: ready_real_processes){
-                if(p.get_process_name()=="name"){
-                    ready_real_processes.remove(p);
-                }
-            }
-            for(Process p: waiting_real_processes){
-                if(p.get_process_name()=="name"){
-                    waiting_real_processes.remove(p);
-                }
-            }
-            for(Process p: all_processes){
-                if(p.get_process_name()=="name"){
-                    all_processes.remove(p);
-                }
-            }
+        if(w==0){//że taki proces w ogóle nie istnieje
+            throw new Exception("Taki proces nie istnieje");
         }
     }//CZAREK JUŻ BĘDZIE O WSZYSTKIM WIEDZIAŁ
     
-    public int get_process_state(int ID){
-        for(Process p:all_processes){
+    
+    public int get_state(int ID) throws Exception {
+        int w=0;
+        for(Proces p:all_processes){
             if(p.get_ID()==ID){
-                return p.get_process_state();
+                w=1;
+                return p.get_state();//metoda o tej samej nazwie ale PROCESU a nie MENEDŻERA
             }
         }
-        //EWA.wyswietl("Proces o podanym ID nie zostal znaleziony");
-        return 2;//chętniej dałbym tu np. -5 ale innym może nie działać
+        if(w==0){//że jednak nie znalazło
+            throw new Exception("Nie ma takiego procesu!");//Shell musi powiadomić użytkownika
+        }
+        return -1;//to i tak nigdy się nie wykona ale bez tego program się czepia
     }
     
-    public void set_process_state(int id, int new_state){
-        if(new_state!=0&&new_state!=1&&new_state!=2){
-            //EWA.wyswietl("Podano zly numer stanu");
+    
+    public void set_state(int id, int new_state) throws Exception {
+        if(new_state!=0&&new_state!=1&&new_state!=2){//jeśli nowy stan poza zakresem
+            throw new Exception("Podano zly nowy stan (podaj 0, 1 lub 2!)");//Shell musi powiadomić użytkownika
         }
-        else{
-            for(Process p:ready_normal_processes){
+        else{//jeśli nowy stan to 0, 1 albo 2 (czyli jakis istniejący)
+            //0->1, 0->2, 1->0, 1->2  KAŻDA ZMIANA MOŻLIWA
+
+            for(Proces p:ready_normal_processes){//nie wiem, czy tyle tego musi być, no ale dla pewności niech będzie - zaszkodzic nie może
                 if(p.get_ID()==id){
-                    p.set_process_state(new_state);
+                    p.set_state(new_state);
                     
                     if(new_state==0){}
                     if(new_state==1){
                         waiting_normal_processes.add(p);
-                        ready_normal_processes.remove(p);
-                        //CZAREK.Take_off_Runnable_proces_Queue(p.get_PCB());
+                        ready_normal_processes.remove(p);//to nawet nie zadziała więc pozdro600
+                        Processor.Take_off_Runnable_proces_Queue(p.get_PCB());
+                        break;//bez tego pętla "out of range"
                     }
                     if(new_state==2){
-                        delete_process(p.get_process_name());//wywoła też kogo trzeba
+                        delete_proces(p.get_name());//wywoła też kogo trzeba
+                        break;
                     }  
                 }
             }
-            for(Process p:waiting_normal_processes){
+            for(Proces p:waiting_normal_processes){
                 if(p.get_ID()==id){
-                    p.set_process_state(new_state);
+                    p.set_state(new_state);
                     
                     if(new_state==0){
                         ready_normal_processes.add(p);                       
                         waiting_normal_processes.remove(p);
-                        //CZAREK.Add_to_Runnable_proces_Queue(p.get_PCB());
-
+                        Processor.Add_to_Runnable_proces_Queue(p.get_PCB());
+                        break;
                     }
                     if(new_state==1){}
                     if(new_state==2){
-                        delete_process(p.get_process_name());//wywoła też kogo trzeba
+                        delete_proces(p.get_name());//wywoła też kogo trzeba
+                        break;
                     }  
                 }
             }
-            for(Process p:ready_real_processes){
+            for(Proces p:ready_real_processes){
                 if(p.get_ID()==id){
-                    p.set_process_state(new_state);
+                    p.set_state(new_state);
                     
                     if(new_state==0){}
                     if(new_state==1){
                         waiting_real_processes.add(p);
                         ready_real_processes.remove(p);
-                        //CZAREK.Take_off_Runnable_proces_Queue(p.get_PCB());
+                        Processor.Take_off_Runnable_proces_Queue(p.get_PCB());
+                        break;
                     }
                     if(new_state==2){
-                        delete_process(p.get_process_name());//wywoła też kogo trzeba
+                        delete_proces(p.get_name());//wywoła też kogo trzeba
+                        break;
                     }  
                 }
             }
-            for(Process p:waiting_real_processes){
+            for(Proces p:waiting_real_processes){
                 if(p.get_ID()==id){
-                    p.set_process_state(new_state);
+                    p.set_state(new_state);
                     
                     if(new_state==0){
                         ready_real_processes.add(p);                       
                         waiting_real_processes.remove(p);
-                        //CZAREK.Add_to_Runnable_proces_Queue(p.get_PCB());
+                        Processor.Add_to_Runnable_proces_Queue(p.get_PCB());
+                        break;
                     }
                     if(new_state==1){}
                     if(new_state==2){
-                        delete_process(p.get_process_name());//wywoła też kogo trzeba
+                        delete_proces(p.get_name());//wywoła też kogo trzeba
+                        break;
                     }  
                 }
             }
-            for(Process p:all_processes){//ta lista przechowuje zarówno gotowe jak i czekające
+            for(Proces p:all_processes){//ta lista przechowuje zarówno gotowe jak i czekające
                 if(p.get_ID()==id){
-                    p.set_process_state(new_state);
+                    p.set_state(new_state);
                     if(new_state==0){}
                     if(new_state==1){}
                     if(new_state==2){
-                        delete_process(p.get_process_name());//wywoła też kogo trzeba
+                        delete_proces(p.get_name());//wywoła też kogo trzeba
+                        break;
                     }  
                 }
             }  
         }
     }
     
-    public void running_change(PCB pcb){//???WSZYSCY po każdej zmianie running muszą mi przesłać jego blok, bym go uaktualnił np. running wykonany już do połowy, potem każą MI zmienić jej stan na waiting - usuwam ją od Czarka
-        for(Process p:ready_normal_processes){
-            if(p.get_ID()==pcb.ID){
-                p.set_PCB(pcb);
+    
+    public PCB get_PCB(int id) throws Exception {
+        for(Proces p:all_processes){
+            if(p.get_ID()==id){
+                return p.get_PCB();//taka sama nazwa metody, ale to juz jest metoda PROCESU a nie MENEDŻERA :D
             }
         }
-        for(Process p:waiting_normal_processes){
-            if(p.get_ID()==pcb.ID){
-                p.set_PCB(pcb);
-            }
-        }
-        for(Process p:ready_real_processes){
-            if(p.get_ID()==pcb.ID){
-                p.set_PCB(pcb);
-            }
-        }
-        for(Process p:waiting_real_processes){
-            if(p.get_ID()==pcb.ID){
-                p.set_PCB(pcb);
-            }
-        }
-        for(Process p:all_processes){
-            if(p.get_ID()==pcb.ID){
-                p.set_PCB(pcb);
-            }
-        }
+        throw new Exception("Proces o podanym ID nie istnieje!");
     }
     
-    public PCB get_PCB(int id){
-        for(Process p:all_processes){
-            if(p.get_ID()==id){
-                return p.get_PCB();
-            }
-        }
-        return all_processes.get(0).get_PCB();//jak nie znajdzie to zwróci blok procesu bezczynności - żeby FILIPowi nie skraszowało
-    }
     
     public String show_info(String name){
-        for(Process p:all_processes){
-            if(p.get_process_name()==name){
-                return p.show_info();
+        for(Proces p:all_processes){
+            if(p.get_name()==name){
+                return p.show_info();//jak wyżej, ta sama nzwa ale inne argumenty=metoda PROCESU a nie MENEDŻERA
             }
         }
         return "Proces o podanej nazwie nie zostal znaleziony";
     }
     
-    public void increase_counters(){
-        
-        for(Process p: ready_normal_processes){//wszędzie -> poza running! Ona nie jest głodzona! I dawać Czarkowi znać, że trzeba zaktualizować
-            //if(p.get_process_name()!=Running.get_process_name()) {
-                
-                //p.increase_counter();
-                //if(p.get_counter()=>5){
-                    //p.set_counter(p.get_counter()-5);
-                    //p.set_priority(p.get_current_priority()-1);//jak za bardzo by zmieniło (poza przedział) to nic się nie wykona
-                    //CZAREK.Add_to_Runnable_proces_Queue(p.get_PCB());//No Czarek musi się zorientować, że zmienił się priorytet -> ON MUSI TO ZAKTUALIZOWAC
-                //}
-            //}
-        }
-        for(Process p: waiting_normal_processes){
-            //if(p.get_process_name()!=Running.get_process_name()) {
-                //p.increase_counter();
-                //if(p.get_counter()=>5){
-                    //p.set_counter(p.get_counter()-5);
-                    //p.set_priority(p.get_current_priority()-1);//jak za bardzo by zmieniło (poza przedział) to nic się nie wykona
-                    //CZAREK.Add_to_Runnable_proces_Queue(p.get_PCB());//No Czarek musi się zorientować, że zmienił się priorytet -> ON MUSI TO ZAKTUALIZOWAC
-                //}
-            //}
-        }
-        for(Process p: ready_real_processes){
-            //if(p.get_process_name()!=Running.get_process_name()) {
-                //p.increase_counter();
-                //if(p.get_counter()=>5){
-                    //p.set_counter(p.get_counter()-5);
-                    //p.set_priority(p.get_current_priority()-1);//jak za bardzo by zmieniło (poza przedział) to nic się nie wykona
-                    //CZAREK.Add_to_Runnable_proces_Queue(p.get_PCB());//No Czarek musi się zorientować, że zmienił się priorytet -> ON MUSI TO ZAKTUALIZOWAC
-                //}
-            //}
-        }
-        for(Process p: waiting_real_processes){
-            //if(p.get_process_name()!=Running.get_process_name()) {
-                //p.increase_counter();
-                //if(p.get_counter()=>5){
-                    //p.set_counter(p.get_counter()-5);
-                    //p.set_priority(p.get_current_priority()-1);//jak za bardzo by zmieniło (poza przedział) to nic się nie wykona
-                    //CZAREK.Add_to_Runnable_proces_Queue(p.get_PCB());//No Czarek musi się zorientować, że zmienił się priorytet -> ON MUSI TO ZAKTUALIZOWAC
-                //}
-            //}
-        }
-        for(Process p: all_processes){
-            //if(p.get_process_name()!=Running.get_process_name()) {
-                //p.increase_counter();
-                //if(p.get_counter()=>5){
-                    //p.set_counter(p.get_counter()-5);
-                    //p.set_priority(p.get_current_priority()-1);//jak za bardzo by zmieniło (poza przedział) to nic się nie wykona
-                    //CZAREK.Add_to_Runnable_proces_Queue(p.get_PCB());//No Czarek musi się zorientować, że zmienił się priorytet -> ON MUSI TO ZAKTUALIZOWAC
-                //}
-            //}
-        }        
-    }
     
-    public Process get_process(String name){
-        for(Process p:all_processes){
-            if(p.get_process_name()==name){
+    public void increase_counters(){//Jędrzej wywołuje za każdym razem, gdy wykona jakiś rozkaz
+                                    
+        for(Proces p: all_processes){//wszystkie procesy poza running - on nie jest głodzony!!!
+            if(p.get_name()!=Running.get_process_name()) {
+                p.increase_how_hungry();
+                if(p.get_how_hungry()>=5){
+                    p.set_how_hungry(p.get_how_hungry()-5);
+                    if(p.get_current_priority()==1||p.get_current_priority()==2||p.get_current_priority()==4||p.get_current_priority()==5){//jeśli można prawidłowo zmniejszyć priorytet
+                        try{
+                            p.set_current_priority(p.get_current_priority()-1);//zmiana poza przedział nic nie zrobi
+                        }
+                        catch(Exception e){}//Po prostu się nie wykona, ja nie mogę nic wyswietlić a poza tym to i tak byłby mój błąd w kodzie, a nie błąd użytkownika
+                    }
+                }
+            }
+        }
+    }      
+    
+        
+    public Proces get_proces(String name) throws Exception {
+        for(Proces p:all_processes){
+            if(p.get_name()==name){
                 return p;
             }
         }
-        return new Process(0, "", 0, "");
+        throw new Exception("Nie ma takiego procesu!");
     }
     
     
     
 }
+
