@@ -4,6 +4,7 @@ import java.util.List;
 
 
 
+
 public class ProcesManager {
     private int new_ID=0;
     private List<Proces> waiting_normal_processes=new LinkedList<>();
@@ -12,16 +13,14 @@ public class ProcesManager {
     private List<Proces> ready_real_processes=new LinkedList<>();
     private List<Proces> all_processes=new LinkedList<>();
     
-    
     public ProcesManager() {
         ready_normal_processes.add(new Proces(new_ID, "PB"));
         all_processes.add(new Proces(new_ID, "PB"));
         new_ID++;
-        Processor.Add_to_Runnable_proces_Queue(ready_normal_processes.get(0).get_PCB());//ref zadziała jak trzeba
-        Running=all_processes.get(0);//to bedzie ten nasz proces bezczynności
+        Processor.Add_to_Runnable_proces_Queue(all_processes.get(0).get_PCB());//ref zadziała jak trzeba
+        Running.running=all_processes.get(0).get_PCB();//to bedzie ten nasz proces bezczynności
                 
     }
-    
     
     public void new_proces(String name, int how_long, String which_file) throws Exception {
         int w=0;
@@ -106,6 +105,7 @@ public class ProcesManager {
     }//CZAREK JUŻ BĘDZIE O WSZYSTKIM WIEDZIAŁ
     
     
+    
     public int get_state(int ID) throws Exception {
         int w=0;
         for(Proces p:all_processes){
@@ -119,7 +119,6 @@ public class ProcesManager {
         }
         return -1;//to i tak nigdy się nie wykona ale bez tego program się czepia
     }
-    
     
     public void set_state(int id, int new_state) throws Exception {
         if(new_state!=0&&new_state!=1&&new_state!=2){//jeśli nowy stan poza zakresem
@@ -136,7 +135,7 @@ public class ProcesManager {
                     if(new_state==1){
                         waiting_normal_processes.add(p);
                         ready_normal_processes.remove(p);//to nawet nie zadziała więc pozdro600
-                        Processor.Take_off_Runnable_proces_Queue(p.get_PCB());
+                        Processor.Delete_from_Runnable_proces_Queue(p.get_PCB());
                         break;//bez tego pętla "out of range"
                     }
                     if(new_state==2){
@@ -170,7 +169,7 @@ public class ProcesManager {
                     if(new_state==1){
                         waiting_real_processes.add(p);
                         ready_real_processes.remove(p);
-                        Processor.Take_off_Runnable_proces_Queue(p.get_PCB());
+                        Processor.Delete_from_Runnable_proces_Queue(p.get_PCB());
                         break;
                     }
                     if(new_state==2){
@@ -220,7 +219,6 @@ public class ProcesManager {
         throw new Exception("Proces o podanym ID nie istnieje!");
     }
     
-    
     public String show_info(String name){
         for(Proces p:all_processes){
             if(p.get_name()==name){
@@ -230,11 +228,10 @@ public class ProcesManager {
         return "Proces o podanej nazwie nie zostal znaleziony";
     }
     
-    
     public void increase_counters(){//Jędrzej wywołuje za każdym razem, gdy wykona jakiś rozkaz
                                     
         for(Proces p: all_processes){//wszystkie procesy poza running - on nie jest głodzony!!!
-            if(p.get_name()!=Running.get_process_name()) {
+            if(p.get_name()!=Running.running.name) {
                 p.increase_how_hungry();
                 if(p.get_how_hungry()>=5){
                     p.set_how_hungry(p.get_how_hungry()-5);
@@ -262,4 +259,3 @@ public class ProcesManager {
     
     
 }
-
