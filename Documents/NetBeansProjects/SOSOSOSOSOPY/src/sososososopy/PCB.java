@@ -48,6 +48,8 @@ public class PCB {
     public Boolean blad=false;//Filip nie wiem po co ci to ale chyba tego chciałes tak?
     //Filipowa lista statyczna na górze (na początku tej klasy)
 
+    
+    
     //SZYMON
     public String statement="-1";//na wszelki wypadek, "-1" to znak, że ktos bawi się pustymi polami np. Bartoszek 
     
