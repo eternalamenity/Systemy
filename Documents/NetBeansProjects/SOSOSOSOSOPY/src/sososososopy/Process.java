@@ -1,8 +1,7 @@
 package sososososopy;
 
-
-
 public class Proces {
+    
     private PCB block;
 
     
@@ -15,7 +14,7 @@ public class Proces {
         block.base_priority=block.current_priority=6;//priorytet procesu bezczynności
         block.which_file=" ";//umówiony sygnał dla FILIPA
         
-        Zarzadzanie_pamiecia.loadToFile(block.which_file);//w tej metodzie Filip nadaje odpowiednie wartości zmiennym page_table[] i where_in_file
+        Zarzadzanie_pamiecia.loadToFile(block.which_file, block);//w tej metodzie Filip nadaje odpowiednie wartości zmiennym page_table[] i where_in_file
         
         block.state=0;//że gotowy
         
@@ -43,7 +42,7 @@ public class Proces {
             block.base_priority=block.current_priority=5;//że zwykłe
         }
         
-        Zarzadzanie_pamiecia.loadToFile(block.which_file);//w tej metodzie Filip nadaje odpowiednie wartości zmiennym page_table[] i where_in_file
+        Zarzadzanie_pamiecia.loadToFile(block.which_file, block);//w tej metodzie Filip nadaje odpowiednie wartości zmiennym page_table[] i where_in_file
         
         block.state=0;//GOTOWY
         
