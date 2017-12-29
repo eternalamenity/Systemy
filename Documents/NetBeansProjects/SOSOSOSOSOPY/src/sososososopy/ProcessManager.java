@@ -61,7 +61,7 @@ public class ProcesManager {
                     throw new Exception("Nie wolno krzywdzic procesu bezczynnosci!");
                 }   
                 else{//jeśli to nie jest proces bezczynności, to pozwól usunąć
-                    Processor.Take_off_Runnable_proces_Queue(p1.get_PCB());
+                    Processor.Delete_from_Runnable_proces_Queue(p.get_PCB());
                     Zarzadzanie_pamiecia.freeMem();
                     
                     
