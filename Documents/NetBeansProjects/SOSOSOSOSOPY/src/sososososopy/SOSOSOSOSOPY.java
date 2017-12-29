@@ -14,10 +14,8 @@ public class SOSOSOSOSOPY {
         Shell shell=null;
         try {
             shell = new Shell();
-        } catch (InterruptedException ex) {
-            System.out.println("interruptedExc");
-        } catch (IOException ex) {
-           System.out.println("IOExceptionex");
+        } catch (Exception ex) {
+            System.out.println("Wystąpił błąd przy próbie uruchomienia systemu.");
         }
         
     }
