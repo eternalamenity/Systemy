@@ -3,8 +3,8 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package sososososopy;
 
+package sososososopy;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -13,6 +13,8 @@ import java.nio.file.NoSuchFileException;
 import java.util.Scanner;
 import java.util.HashMap;
 import javax.management.openmbean.OpenDataException;
+
+
 
 public class Shell {
     
@@ -110,7 +112,7 @@ public class Shell {
              Commands.put("MF",2); ///Utworz plik
              Commands.put("SF",1); ///Wyswietl plik
              Commands.put("DF",1); ///Usuń plik
-             Commands.put("EF",1); ///Edytuj plik
+             Commands.put("EF",3); ///Edytuj plik
              Commands.put("SC",0); ///Wyswietl tablice Fat
              Commands.put("CC",3); ///Przypisz komunikat do procesu
              Commands.put("RC",1); ///Przeczytaj komunikat
@@ -141,8 +143,6 @@ public class Shell {
                       Separate(line);
                       
                       
-                     ///////////IsAllowed - czy komenda jest poprawna
-                       ///////////Jak nie jest to obslugujemy (prosimy o podanie jeszcze raz line ew czy skipnac?
                        while(isAllowed()==false){
                        System.out.println("Komenda >> " + line + " << jest nieprawidłowa.");
                        System.out.println("Naciśnij E, jeśli chcesz wyjść z programu.");
@@ -180,16 +180,16 @@ public class Shell {
                                
                                try{
                                a = Integer.parseInt(Parameters[1]);
-                               ProcessManager.new_process(Parameters[0],a,Parameters[2]);
+                             ProcessManager.new_process(Parameters[0],a,Parameters[2]);
                                }catch(NumberFormatException e){
                                System.out.println("Podana wielkość jest nieprawidłowa. Parametr drugi musi być liczbą. Nastąpi teraz przejście do następnej komendy.");}
                              
                                break;}
                            case "DP" : { ///Usuń proces
-                               ProcessManager.delete_process(Parameters[0]); 
+                              ProcessManager.delete_process(Parameters[0]); 
                                break;}
                            case "BC" : { ///Pokaż blok procesu
-                               System.out.println(ProcessManager.show_info(Parameters[0]));
+                              System.out.println(ProcessManager.show_info(Parameters[0]));
                                break;}
                            case "GO" : { ///Wykonaj rozkaz
                                System.out.println("test GO"); ////////Do ogarniecia
@@ -211,11 +211,12 @@ public class Shell {
                            case "MF" : { ///Utworz plik
                                try{
                                disc.saveOnDisc(Parameters[0], Parameters[1]);
+                               System.out.println("Plik został pomyślnie utworzony!");
                                break;}catch(IOException e){System.out.println("Nie udało się utworzyć pliku");}
                            }
                            case "SF" : { ///Wyswietl plik
                                try{
-                               System.out.println(disc.readFile(Parameters[0]));}
+                               System.out.println(disc.readFile(Parameters[0],disc.FILE_EDIT));}
                                catch(NoSuchFileException e){
                                System.out.println("Nie można wyświetlić. Plik o nazwie \""+ Parameters[0] + " \" nie istnieje.");
                                } catch (OpenDataException e) {
@@ -234,7 +235,7 @@ public class Shell {
                                disc.editFile(Parameters[0],Parameters[1],Parameters[2]);
                                } 
                                catch(OpenDataException e){
-                               System.out.println("Plik nie znajduje sie w trybie edycji.");}
+                               System.out.println(e.getMessage());}
                                catch (NoSuchFileException e){
                                System.out.println("Nie można wyświetlić. Plik o nazwie \""+ Parameters[0] + " \" nie istnieje.");}
                                catch (IOException e){
